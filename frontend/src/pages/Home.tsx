@@ -24,7 +24,7 @@ const Home: React.FC = () => {
         id: tasks.length + 1,
         title,
         description,
-        status: "pending",
+        status: "incomplete", // Change le statut par défaut
       };
       dispatch(addTask(newTask));
       setTitle("");
@@ -72,9 +72,8 @@ const Home: React.FC = () => {
 
       <section>
         <h2 className="text-2xl font-semibold mb-4">Liste des tâches</h2>
-        {taskStatus === "loading" && <p>Chargement des tâches...</p>}
-        {taskStatus === "failed" && (
-          <p>Erreur lors du chargement des tâches.</p>
+        {taskStatus === "loading" && (
+          <p className="text-gray-500">Chargement des tâches...</p>
         )}
         {tasks.length > 0 ? (
           <TaskList />
