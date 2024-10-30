@@ -54,7 +54,7 @@ const Home: React.FC = () => {
         createTask({
           title: title.trim(),
           description: description.trim(),
-          status: "en cours",
+          status: "en_cours", // Changé de "en cours" à "en_cours"
         })
       ).unwrap();
 

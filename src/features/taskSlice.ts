@@ -1,16 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+// Définir les statuts valides comme type
+type TaskStatus = "en_cours" | "terminé" | "en_attente";
+
 interface Task {
   id: number;
   title: string;
   description: string;
-  status: string;
+  status: TaskStatus;
 }
 
 interface CreateTaskPayload {
   title: string;
   description: string;
-  status: string;
+  status: TaskStatus;
 }
 
 // Thunk pour récupérer les tâches
@@ -58,6 +61,11 @@ export const createTask = createAsyncThunk(
         throw new Error("Non authentifié");
       }
 
+      // Vérifier que le status est valide
+      if (!["en_cours", "terminé", "en_attente"].includes(taskData.status)) {
+        throw new Error("Status invalide");
+      }
+
       console.log("Envoi requête POST /api/tasks");
       const response = await fetch("http://localhost:3001/api/tasks", {
         method: "POST",
@@ -65,7 +73,10 @@ export const createTask = createAsyncThunk(
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify({
+          ...taskData,
+          status: taskData.status,
+        }),
       });
 
       console.log("Réponse reçue:", response.status);
