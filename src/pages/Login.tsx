@@ -7,13 +7,31 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "user" && password === "password") {
-      localStorage.setItem("auth", "true");
-      navigate("/");
-    } else {
-      setError("Nom d’utilisateur ou mot de passe incorrect");
+    try {
+      if (username === "user" && password === "password") {
+        // Appel à l'API pour obtenir le token
+        const response = await fetch("http://localhost:3001/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.token) {
+          localStorage.setItem("authToken", data.token);
+          navigate("/");
+        } else {
+          setError("Erreur lors de la connexion");
+        }
+      } else {
+        setError("Nom d'utilisateur ou mot de passe incorrect");
+      }
+    } catch (error) {
+      setError("Erreur lors de la connexion au serveur");
     }
   };
 
