@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { updateTaskStatus } from "../features/taskSlice";
+import { updateTaskStatus, type TaskStatus } from "../features/taskSlice";
 import { AppDispatch } from "../app/store";
 
 interface TaskProps {
@@ -8,7 +8,7 @@ interface TaskProps {
     id: number;
     title: string;
     description: string;
-    status: "incomplete" | "complete" | "in_progress";
+    status: TaskStatus;
   };
 }
 
@@ -16,10 +16,7 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as
-      | "incomplete"
-      | "complete"
-      | "in_progress";
+    const newStatus = e.target.value as TaskStatus;
     dispatch(updateTaskStatus({ id: task.id, status: newStatus }));
   };
 
@@ -34,9 +31,9 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
           onChange={handleStatusChange}
           className="ml-2 p-1 border rounded"
         >
-          <option value="incomplete">Incomplete</option>
-          <option value="complete">Complete</option>
-          <option value="in_progress">In Progress</option>
+          <option value="en_cours">En cours</option>
+          <option value="terminé">Terminé</option>
+          <option value="en_attente">En attente</option>
         </select>
       </p>
     </div>

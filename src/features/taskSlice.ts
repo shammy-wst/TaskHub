@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-// Définir les statuts valides comme type
-type TaskStatus = "incomplete" | "complete" | "in_progress";
+// Définir les statuts valides comme type et constante
+export const TASK_STATUSES = ["en_cours", "terminé", "en_attente"] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 interface Task {
   id: number;
@@ -16,6 +17,8 @@ interface CreateTaskPayload {
   status: TaskStatus;
 }
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
 // Thunk pour récupérer les tâches
 export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
   try {
@@ -28,7 +31,7 @@ export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
     }
 
     console.log("Envoi requête GET /api/tasks");
-    const response = await fetch("http://localhost:3001/api/tasks", {
+    const response = await fetch(`${API_URL}/api/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -63,7 +66,7 @@ export const createTask = createAsyncThunk(
       }
 
       console.log("Envoi requête POST /api/tasks");
-      const response = await fetch("http://localhost:3001/api/tasks", {
+      const response = await fetch(`${API_URL}/api/tasks`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -92,31 +95,27 @@ export const updateTaskStatus = createAsyncThunk(
   "tasks/updateTaskStatus",
   async ({ id, status }: { id: number; status: TaskStatus }) => {
     try {
-      console.log("Début updateTaskStatus avec données:", { id, status });
       const token = localStorage.getItem("authToken");
-      console.log("Token récupéré:", token ? "Présent" : "Absent");
-
       if (!token) {
         throw new Error("Non authentifié");
       }
 
-      console.log(`Envoi requête PATCH /api/tasks/${id}`);
-      const response = await fetch(`http://localhost:3001/api/tasks/${id}`, {
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status: status,
+        }),
       });
 
-      console.log("Réponse reçue:", response.status);
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Statut de la tâche mis à jour:", data);
       return data;
     } catch (error) {
       console.error("Erreur dans updateTaskStatus:", error);
