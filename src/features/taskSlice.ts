@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 // Définir les statuts valides comme type
-type TaskStatus = "en_cours" | "terminé" | "en_attente";
+type TaskStatus = "incomplete" | "complete" | "in_progress";
 
 interface Task {
   id: number;
@@ -87,6 +87,44 @@ export const createTask = createAsyncThunk(
   }
 );
 
+// Thunk pour mettre à jour le statut d'une tâche
+export const updateTaskStatus = createAsyncThunk(
+  "tasks/updateTaskStatus",
+  async ({ id, status }: { id: number; status: TaskStatus }) => {
+    try {
+      console.log("Début updateTaskStatus avec données:", { id, status });
+      const token = localStorage.getItem("authToken");
+      console.log("Token récupéré:", token ? "Présent" : "Absent");
+
+      if (!token) {
+        throw new Error("Non authentifié");
+      }
+
+      console.log(`Envoi requête PATCH /api/tasks/${id}`);
+      const response = await fetch(`http://localhost:3001/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      console.log("Réponse reçue:", response.status);
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Statut de la tâche mis à jour:", data);
+      return data;
+    } catch (error) {
+      console.error("Erreur dans updateTaskStatus:", error);
+      throw error;
+    }
+  }
+);
+
 const taskSlice = createSlice({
   name: "tasks",
   initialState: {
@@ -94,19 +132,7 @@ const taskSlice = createSlice({
     status: "idle",
     error: null as string | null,
   },
-  reducers: {
-    updateTaskStatus: (state, action) => {
-      console.log("updateTaskStatus appelé avec:", action.payload);
-      const { id, status } = action.payload;
-      const task = state.items.find((task) => task.id === id);
-      if (task) {
-        task.status = status;
-        console.log("Status mis à jour pour la tâche:", id);
-      } else {
-        console.log("Tâche non trouvée:", id);
-      }
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchTasks.pending, (state) => {
@@ -137,9 +163,28 @@ const taskSlice = createSlice({
         state.status = "failed";
         state.error =
           action.error.message || "Erreur lors de la création de la tâche";
+      })
+      .addCase(updateTaskStatus.pending, (state) => {
+        console.log("updateTaskStatus: pending");
+        state.status = "loading";
+      })
+      .addCase(updateTaskStatus.fulfilled, (state, action) => {
+        console.log("updateTaskStatus: fulfilled", action.payload);
+        state.status = "succeeded";
+        const index = state.items.findIndex(
+          (task) => task.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(updateTaskStatus.rejected, (state, action) => {
+        console.log("updateTaskStatus: rejected", action.error);
+        state.status = "failed";
+        state.error =
+          action.error.message || "Erreur lors de la mise à jour du statut";
       });
   },
 });
 
-export const { updateTaskStatus } = taskSlice.actions;
 export default taskSlice.reducer;

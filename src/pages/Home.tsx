@@ -54,7 +54,7 @@ const Home: React.FC = () => {
         createTask({
           title: title.trim(),
           description: description.trim(),
-          status: "en_cours",
+          status: "incomplete", // Statut par défaut
         })
       ).unwrap();
 
