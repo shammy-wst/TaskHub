@@ -10,27 +10,25 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (username === "user" && password === "password") {
-        // Appel à l'API pour obtenir le token
-        const response = await fetch("http://localhost:3001/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+      const response = await fetch("http://localhost:3001/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }), // Inclure les identifiants dans la requête
+      });
 
-        const data = await response.json();
+      const data = await response.json();
+      console.log("Réponse de l'API:", data); // Ajoutez ce log pour vérifier la réponse
 
-        if (data.token) {
-          localStorage.setItem("authToken", data.token);
-          navigate("/");
-        } else {
-          setError("Erreur lors de la connexion");
-        }
+      if (data.token) {
+        localStorage.setItem("authToken", data.token);
+        navigate("/");
       } else {
-        setError("Nom d'utilisateur ou mot de passe incorrect");
+        setError("Erreur lors de la connexion");
       }
     } catch (error) {
+      console.error("Erreur lors de la connexion au serveur:", error); // Ajoutez ce log pour vérifier les erreurs
       setError("Erreur lors de la connexion au serveur");
     }
   };

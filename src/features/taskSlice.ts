@@ -49,21 +49,17 @@ export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
   }
 });
 
+// Thunk pour créer une tâche
 export const createTask = createAsyncThunk(
   "tasks/createTask",
-  async (taskData: CreateTaskPayload) => {
+  async (task: CreateTaskPayload) => {
     try {
-      console.log("Début createTask avec données:", taskData);
+      console.log("Début createTask avec données:", task);
       const token = localStorage.getItem("authToken");
       console.log("Token récupéré:", token ? "Présent" : "Absent");
 
       if (!token) {
         throw new Error("Non authentifié");
-      }
-
-      // Vérifier que le status est valide
-      if (!["en_cours", "terminé", "en_attente"].includes(taskData.status)) {
-        throw new Error("Status invalide");
       }
 
       console.log("Envoi requête POST /api/tasks");
@@ -73,19 +69,12 @@ export const createTask = createAsyncThunk(
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...taskData,
-          status: taskData.status,
-        }),
+        body: JSON.stringify(task),
       });
 
       console.log("Réponse reçue:", response.status);
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Erreur détaillée:", errorData);
-        throw new Error(
-          errorData.message || "Erreur lors de la création de la tâche"
-        );
+        throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const data = await response.json();
