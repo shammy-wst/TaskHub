@@ -119,6 +119,35 @@ export const updateTaskStatus = createAsyncThunk(
   }
 );
 
+export const deleteTask = createAsyncThunk(
+  "tasks/deleteTask",
+  async (id: number) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Non authentifié");
+      }
+
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      return id;
+    } catch (error) {
+      console.error("Erreur dans deleteTask:", error);
+      throw error;
+    }
+  }
+);
+
 // Fonction utilitaire pour convertir statusId en status
 function getStatusFromId(statusId: number | null): TaskStatus | null {
   switch (statusId) {
@@ -182,6 +211,18 @@ const taskSlice = createSlice({
         state.status = "failed";
         state.error =
           action.error.message || "Erreur lors de la mise à jour du statut";
+      })
+      .addCase(deleteTask.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(deleteTask.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = state.items.filter((task) => task.id !== action.payload);
+      })
+      .addCase(deleteTask.rejected, (state, action) => {
+        state.status = "failed";
+        state.error =
+          action.error.message || "Erreur lors de la suppression de la tâche";
       });
   },
 });
