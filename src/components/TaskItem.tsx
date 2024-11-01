@@ -25,50 +25,62 @@ const TaskItem: React.FC<TaskProps> = ({ task }) => {
     dispatch(updateTaskStatus({ id: task.id, status: newStatus }))
       .unwrap()
       .then(() => {
-        console.log("Statut mis à jour avec succès");
+        console.log("Status updated successfully");
       })
       .catch((error) => {
-        console.error("Erreur lors de la mise à jour du statut:", error);
+        console.error("Error updating status:", error);
       });
   };
 
   const handleDelete = () => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
+    if (window.confirm("Are you sure you want to delete this task?")) {
       dispatch(deleteTask(task.id))
         .unwrap()
         .then(() => {
-          console.log("Tâche supprimée avec succès");
+          console.log("Task deleted successfully");
         })
         .catch((error) => {
-          console.error("Erreur lors de la suppression:", error);
+          console.error("Error deleting task:", error);
         });
     }
   };
 
   return (
-    <div className="p-4 mb-4 bg-white rounded-lg shadow-md border-l-4 border-blue-500">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-xl font-semibold">{task.title}</h3>
-          <p className="text-gray-600">{task.description}</p>
-          <p className="text-sm font-medium mt-2">
-            Status:{" "}
+    <div className="bg-black border-[3px] border-white p-4 md:p-6 group">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex-1 w-full sm:w-auto">
+          <h3 className="text-lg md:text-xl font-semibold text-white">
+            {task.title}
+          </h3>
+          <p className="text-zinc-300 mt-2 text-sm md:text-base">
+            {task.description}
+          </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-4">
+            <span className="text-zinc-300">Status:</span>
             <select
               value={task.status}
-              onChange={handleStatusChange}
-              className="ml-2 p-1 border rounded"
+              onChange={(e) =>
+                handleStatusChange(e as React.ChangeEvent<HTMLSelectElement>)
+              }
+              className="bg-black text-white border-[3px] border-white p-2 appearance-none pr-8 relative"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+                backgroundPosition: "right 0.5rem center",
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "1.5em",
+              }}
             >
-              <option value="en_attente">En attente</option>
-              <option value="en_cours">En cours</option>
-              <option value="terminé">Terminé</option>
+              <option value="en_attente">Pending</option>
+              <option value="en_cours">In Progress</option>
+              <option value="terminé">Completed</option>
             </select>
-          </p>
+          </div>
         </div>
         <button
           onClick={handleDelete}
-          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          className="w-full sm:w-auto px-4 py-2 bg-black text-red-500 border-[3px] border-white hover:bg-red-500 hover:text-white transition-all duration-200"
         >
-          Supprimer
+          Delete
         </button>
       </div>
     </div>

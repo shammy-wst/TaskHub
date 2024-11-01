@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTasks, createTask } from "../features/taskSlice";
-import TaskList from "../components/TaskList";
+import TaskItem from "../components/TaskItem";
 import { RootState, AppDispatch } from "../app/store";
 import { useNavigate } from "react-router-dom";
+import WelcomeScreen from "../components/WelcomeScreen";
+import RainbowText from "../components/RainbowText";
 
 const Home: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -14,8 +16,18 @@ const Home: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    const lastVisit = localStorage.getItem("lastVisitTimestamp");
+    const currentTime = new Date().getTime();
 
-  useEffect(() => {
+    // Si jamais visité ou si la dernière visite date de plus de 24h
+    if (!lastVisit || currentTime - parseInt(lastVisit) > 24 * 60 * 60 * 1000) {
+      return true;
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
     console.log("Home: useEffect déclenché");
     const token = localStorage.getItem("authToken");
 
@@ -75,69 +87,132 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        TaskHub - Page d'accueil
-      </h1>
+    <>
+      {showWelcome && (
+        <WelcomeScreen onComplete={() => setShowWelcome(false)} />
+      )}
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          Ajouter une nouvelle tâche
-        </h2>
-        <form
-          onSubmit={handleAddTask}
-          className="bg-white p-4 rounded-lg shadow-md"
-        >
-          <input
-            type="text"
-            placeholder="Titre de la tâche"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-            required
-          />
-          <textarea
-            placeholder="Description de la tâche"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-2 mb-4 border border-gray-300 rounded-md h-32"
-            required
-          />
-          {formError && (
-            <div className="text-red-500 mb-4 text-sm">{formError}</div>
-          )}
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors"
-            disabled={taskStatus === "loading"}
-          >
-            {taskStatus === "loading"
-              ? "Création en cours..."
-              : "Ajouter la tâche"}
-          </button>
-        </form>
-      </section>
+      {/* Main container - overflow-hidden uniquement en desktop */}
+      <main className="flex-1 lg:overflow-hidden">
+        <div className="h-full max-w-5xl mx-auto p-4 lg:p-6 flex items-center">
+          <div className="flex flex-col lg:flex-row w-full gap-4 lg:gap-8">
+            {/* Left column */}
+            <div className="flex flex-col lg:w-1/3 gap-4 lg:gap-8">
+              {/* New Task form */}
+              <div className="border-[3px] border-white p-4 lg:p-6">
+                <h2 className="text-xl font-bold text-white mb-4 lg:mb-6">
+                  New Task
+                </h2>
+                <form onSubmit={handleAddTask} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Task title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full border-[3px] border-white p-2 lg:p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white"
+                  />
+                  <textarea
+                    placeholder="Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full border-[3px] border-white p-2 lg:p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white min-h-[80px] lg:min-h-[120px] resize-none"
+                  />
+                  {formError && (
+                    <p className="text-red-500 text-sm">{formError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full border-[3px] border-white p-2 lg:p-3 hover:bg-white hover:text-black transition-all duration-200 text-white"
+                  >
+                    Add Task
+                  </button>
+                </form>
+              </div>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Liste des tâches</h2>
-        {taskStatus === "loading" && (
-          <div className="text-center p-4">
-            <p className="text-gray-500">Chargement des tâches...</p>
+              {/* About section - desktop only */}
+              <div className="border-[3px] border-white p-6 hidden lg:block">
+                <h3 className="text-lg font-bold text-white mb-4">
+                  About TaskHub
+                </h3>
+                <p
+                  className="text-zinc-300 text-sm leading-relaxed"
+                  style={{ maxWidth: "45ch" }}
+                >
+                  TaskHub was born from a personal frustration. As a freelance
+                  developer, I was constantly juggling between different
+                  projects and clients. Existing solutions were either too
+                  complex or unsuited to my workflow. One evening in 2024, after
+                  missing an important deadline due to poor organization, I
+                  decided to create a tool that would exactly match my needs:
+                  simple, efficient, and straightforward. TaskHub represents my
+                  vision of task management - minimalist yet powerful, just like
+                  its design inspired by retro gaming consoles and modern web
+                  aesthetics.
+                </p>
+              </div>
+            </div>
+
+            {/* Right column - hauteur adaptative */}
+            <div className="lg:w-2/3">
+              <div className="border-[3px] border-white p-4 lg:p-6 h-fit">
+                <h2 className="text-xl font-bold text-white mb-4 lg:mb-6">
+                  My Tasks
+                </h2>
+                <div
+                  className="lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto relative"
+                  id="tasksContainer"
+                >
+                  {taskStatus === "loading" ? (
+                    <div className="text-white">Loading...</div>
+                  ) : taskStatus === "failed" ? (
+                    <div className="text-red-500">Error: {error}</div>
+                  ) : tasks.length === 0 ? (
+                    <div className="text-zinc-300">No tasks available</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {tasks.map((task) => (
+                        <TaskItem key={task.id} task={task} />
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    id="scrollIndicator"
+                    className="absolute bottom-2 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 hidden lg:block"
+                    style={{ opacity: tasks.length > 3 ? "1" : "0" }}
+                  >
+                    <div className="animate-bounce">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 text-white opacity-50"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-        {taskStatus === "failed" && (
-          <div className="text-center p-4 text-red-500">Erreur: {error}</div>
-        )}
-        {taskStatus === "succeeded" && tasks.length === 0 ? (
-          <p className="text-gray-500 text-center p-4">
-            Aucune tâche disponible pour le moment. Ajoutez une nouvelle tâche
-            pour commencer.
-          </p>
-        ) : (
-          <TaskList />
-        )}
-      </section>
-    </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <div className="text-center py-2">
+        <div className="text-white">Icham M'MADI</div>
+        <RainbowText>
+          <span className="text-sm">Creative Web Developer</span>
+        </RainbowText>
+      </div>
+    </>
   );
 };
 
