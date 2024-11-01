@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
-import "./index.css"; // Importation des styles Tailwind CSS
+import "./index.css";
 import store from "./app/store";
 import App from "./App";
 

@@ -100,7 +100,7 @@ const Home: React.FC = () => {
           className="absolute inset-0 z-0 opacity-20"
           style={{
             backgroundImage: `url(${cubeGif})`,
-            backgroundSize: "50%",
+            backgroundSize: "30%",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
