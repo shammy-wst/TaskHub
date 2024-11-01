@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-// Définir les statuts valides comme type et constante
 export const TASK_STATUSES = ["en_cours", "terminé", "en_attente"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -9,6 +8,7 @@ interface Task {
   title: string;
   description: string;
   status: TaskStatus;
+  statusId?: number;
 }
 
 interface CreateTaskPayload {
@@ -19,18 +19,13 @@ interface CreateTaskPayload {
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
-// Thunk pour récupérer les tâches
 export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
   try {
-    console.log("Début fetchTasks");
     const token = localStorage.getItem("authToken");
-    console.log("Token récupéré:", token ? "Présent" : "Absent");
-
     if (!token) {
       throw new Error("Non authentifié");
     }
 
-    console.log("Envoi requête GET /api/tasks");
     const response = await fetch(`${API_URL}/api/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -38,34 +33,31 @@ export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
       },
     });
 
-    console.log("Réponse reçue:", response.status);
     if (!response.ok) {
       throw new Error(`Erreur HTTP: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log("Données reçues:", data);
-    return data;
+    // Convertir statusId en status
+    return data.map((task: any) => ({
+      ...task,
+      status: getStatusFromId(task.statusId) || "en_attente",
+    }));
   } catch (error) {
     console.error("Erreur dans fetchTasks:", error);
     throw error;
   }
 });
 
-// Thunk pour créer une tâche
 export const createTask = createAsyncThunk(
   "tasks/createTask",
   async (task: CreateTaskPayload) => {
     try {
-      console.log("Début createTask avec données:", task);
       const token = localStorage.getItem("authToken");
-      console.log("Token récupéré:", token ? "Présent" : "Absent");
-
       if (!token) {
         throw new Error("Non authentifié");
       }
 
-      console.log("Envoi requête POST /api/tasks");
       const response = await fetch(`${API_URL}/api/tasks`, {
         method: "POST",
         headers: {
@@ -75,14 +67,15 @@ export const createTask = createAsyncThunk(
         body: JSON.stringify(task),
       });
 
-      console.log("Réponse reçue:", response.status);
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Tâche créée:", data);
-      return data;
+      return {
+        ...data,
+        status: getStatusFromId(data.statusId) || "en_attente",
+      };
     } catch (error) {
       console.error("Erreur dans createTask:", error);
       throw error;
@@ -90,7 +83,6 @@ export const createTask = createAsyncThunk(
   }
 );
 
-// Thunk pour mettre à jour le statut d'une tâche
 export const updateTaskStatus = createAsyncThunk(
   "tasks/updateTaskStatus",
   async ({ id, status }: { id: number; status: TaskStatus }) => {
@@ -107,7 +99,7 @@ export const updateTaskStatus = createAsyncThunk(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: status,
+          status,
         }),
       });
 
@@ -116,13 +108,30 @@ export const updateTaskStatus = createAsyncThunk(
       }
 
       const data = await response.json();
-      return data;
+      return {
+        ...data,
+        status: status, // Utiliser le status envoyé plutôt que celui de la réponse
+      };
     } catch (error) {
       console.error("Erreur dans updateTaskStatus:", error);
       throw error;
     }
   }
 );
+
+// Fonction utilitaire pour convertir statusId en status
+function getStatusFromId(statusId: number | null): TaskStatus | null {
+  switch (statusId) {
+    case 1:
+      return "en_attente";
+    case 2:
+      return "en_cours";
+    case 3:
+      return "terminé";
+    default:
+      return null;
+  }
+}
 
 const taskSlice = createSlice({
   name: "tasks",
@@ -135,40 +144,32 @@ const taskSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchTasks.pending, (state) => {
-        console.log("fetchTasks: pending");
         state.status = "loading";
       })
       .addCase(fetchTasks.fulfilled, (state, action) => {
-        console.log("fetchTasks: fulfilled", action.payload);
         state.status = "succeeded";
         state.items = action.payload;
       })
       .addCase(fetchTasks.rejected, (state, action) => {
-        console.log("fetchTasks: rejected", action.error);
         state.status = "failed";
         state.error = action.error.message || "Une erreur est survenue";
       })
       .addCase(createTask.pending, (state) => {
-        console.log("createTask: pending");
         state.status = "loading";
       })
       .addCase(createTask.fulfilled, (state, action) => {
-        console.log("createTask: fulfilled", action.payload);
         state.status = "succeeded";
         state.items.push(action.payload);
       })
       .addCase(createTask.rejected, (state, action) => {
-        console.log("createTask: rejected", action.error);
         state.status = "failed";
         state.error =
           action.error.message || "Erreur lors de la création de la tâche";
       })
       .addCase(updateTaskStatus.pending, (state) => {
-        console.log("updateTaskStatus: pending");
         state.status = "loading";
       })
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        console.log("updateTaskStatus: fulfilled", action.payload);
         state.status = "succeeded";
         const index = state.items.findIndex(
           (task) => task.id === action.payload.id
@@ -178,7 +179,6 @@ const taskSlice = createSlice({
         }
       })
       .addCase(updateTaskStatus.rejected, (state, action) => {
-        console.log("updateTaskStatus: rejected", action.error);
         state.status = "failed";
         state.error =
           action.error.message || "Erreur lors de la mise à jour du statut";
