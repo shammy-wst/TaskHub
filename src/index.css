@@ -2,7 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("https://fonts.googleapis.com/css2?family=Creepster&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik+Puddles&display=swap");
+
 body {
   @apply bg-black;
   font-family: "JetBrains Mono", monospace;
+}
+
+@keyframes rainbow {
+  0% {
+    color: #ff0000;
+  }
+  17% {
+    color: #ff00ff;
+  }
+  33% {
+    color: #0000ff;
+  }
+  50% {
+    color: #00ffff;
+  }
+  67% {
+    color: #00ff00;
+  }
+  83% {
+    color: #ffff00;
+  }
+  100% {
+    color: #ff0000;
+  }
+}
+
+.rainbow-letter {
+  display: inline-block;
+  animation: rainbow 12s linear infinite;
+}
+
+/* Décalage de l'animation pour chaque lettre */
+.rainbow-letter:nth-child(1) {
+  animation-delay: -0s;
+}
+.rainbow-letter:nth-child(2) {
+  animation-delay: -1.7s;
+}
+.rainbow-letter:nth-child(3) {
+  animation-delay: -3.4s;
+}
+.rainbow-letter:nth-child(4) {
+  animation-delay: -5.1s;
+}
+.rainbow-letter:nth-child(5) {
+  animation-delay: -6.8s;
+}
+.rainbow-letter:nth-child(6) {
+  animation-delay: -8.5s;
+}
+.rainbow-letter:nth-child(7) {
+  animation-delay: -10.2s;
+}
+
+.rainbow-text {
+  animation: rainbow 4s linear infinite;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Ajoute cette animation si elle n'existe pas déjà */
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s steps(1) infinite;
 }

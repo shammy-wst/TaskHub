@@ -6,6 +6,9 @@ import { RootState, AppDispatch } from "../app/store";
 import { useNavigate } from "react-router-dom";
 import WelcomeScreen from "../components/WelcomeScreen";
 import RainbowText from "../components/RainbowText";
+import cubeGif from "../assets/cube.gif";
+import galaxyGif from "../assets/galaxy.gif";
+import fujiGif from "../assets/fuji.gif";
 
 const Home: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,7 +59,7 @@ const Home: React.FC = () => {
     setFormError(null);
 
     if (!title.trim() || !description.trim()) {
-      setFormError("Le titre et la description sont requis");
+      setFormError("Title and description are required");
       return;
     }
 
@@ -74,14 +77,11 @@ const Home: React.FC = () => {
       setTitle("");
       setDescription("");
 
-      // Recharger la liste des tâches
       dispatch(fetchTasks());
     } catch (error) {
       console.error("Erreur lors de la création de la tâche:", error);
       setFormError(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la création de la tâche"
+        error instanceof Error ? error.message : "Error while creating the task"
       );
     }
   };
@@ -92,110 +92,138 @@ const Home: React.FC = () => {
         <WelcomeScreen onComplete={() => setShowWelcome(false)} />
       )}
 
-      {/* Main container - overflow-hidden uniquement en desktop */}
-      <main className="flex-1 lg:overflow-hidden">
-        <div className="h-full max-w-5xl mx-auto p-4 lg:p-6 flex items-center">
-          <div className="flex flex-col lg:flex-row w-full gap-4 lg:gap-8">
+      <main
+        className="flex-1 lg:overflow-hidden relative"
+        style={{ background: "black" }}
+      >
+        <div
+          className="absolute inset-0 z-0 opacity-20"
+          style={{
+            backgroundImage: `url(${cubeGif})`,
+            backgroundSize: "50%",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+
+        <div className="relative z-10 h-full max-w-5xl mx-auto flex items-center">
+          <div className="flex flex-col lg:flex-row w-full gap-8">
             {/* Left column */}
-            <div className="flex flex-col lg:w-1/3 gap-4 lg:gap-8">
-              {/* New Task form */}
-              <div className="border-[3px] border-white p-4 lg:p-6">
-                <h2 className="text-xl font-bold text-white mb-4 lg:mb-6">
-                  New Task
-                </h2>
-                <form onSubmit={handleAddTask} className="space-y-4">
+            <div className="flex flex-col lg:w-1/3 gap-8">
+              {/* Task Form */}
+              <div className="border-[3px] border-white p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="animate-pulse text-green-500 text-xl">
+                    ›
+                  </span>
+                  <h2 className="font-mono text-xl tracking-wider">
+                    <span className="text-blue-400">new</span>
+                    <span className="text-purple-400">.</span>
+                    <span className="text-green-400">task</span>
+                    <span className="text-white animate-blink">_</span>
+                  </h2>
+                </div>
+                <form className="flex flex-col gap-4" onSubmit={handleAddTask}>
                   <input
                     type="text"
-                    placeholder="Task title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full border-[3px] border-white p-2 lg:p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white"
+                    placeholder="Task title"
+                    className="w-full border-[3px] border-white p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white"
                   />
                   <textarea
-                    placeholder="Description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border-[3px] border-white p-2 lg:p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white min-h-[80px] lg:min-h-[120px] resize-none"
+                    placeholder="Description"
+                    className="w-full border-[3px] border-white p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white min-h-[120px] resize-none"
                   />
                   {formError && (
-                    <p className="text-red-500 text-sm">{formError}</p>
+                    <div className="text-red-500 text-sm">{formError}</div>
                   )}
                   <button
                     type="submit"
-                    className="w-full border-[3px] border-white p-2 lg:p-3 hover:bg-white hover:text-black transition-all duration-200 text-white"
+                    className="relative w-full border-[3px] border-white p-3 text-white group"
                   >
-                    Add Task
+                    <span className="relative z-10 group-hover:opacity-0 transition-opacity duration-200">
+                      Add Task
+                    </span>
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <img
+                        src={fujiGif}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </button>
                 </form>
               </div>
 
-              {/* About section - desktop only */}
-              <div className="border-[3px] border-white p-6 hidden lg:block">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  About TaskHub
-                </h3>
-                <p
-                  className="text-zinc-300 text-sm leading-relaxed"
-                  style={{ maxWidth: "45ch" }}
-                >
-                  TaskHub was born from a personal frustration. As a freelance
-                  developer, I was constantly juggling between different
-                  projects and clients. Existing solutions were either too
-                  complex or unsuited to my workflow. One evening in 2024, after
-                  missing an important deadline due to poor organization, I
-                  decided to create a tool that would exactly match my needs:
-                  simple, efficient, and straightforward. TaskHub represents my
-                  vision of task management - minimalist yet powerful, just like
-                  its design inspired by retro gaming consoles and modern web
-                  aesthetics.
-                </p>
+              {/* About section */}
+              <div className="border-[3px] border-white p-6 lg:block">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white font-mono">
+                      About TaskHub
+                    </h3>
+                    <button
+                      onClick={() => navigate("/about")}
+                      className="relative border-[3px] border-white px-4 py-2 text-white transition-all duration-200 font-mono text-sm flex items-center gap-2 group"
+                    >
+                      <span className="relative z-10 group-hover:opacity-0 transition-opacity duration-200">
+                        Discover our story
+                      </span>
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <img
+                          src={galaxyGif}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right column - hauteur adaptative */}
+            {/* Right column */}
             <div className="lg:w-2/3">
-              <div className="border-[3px] border-white p-4 lg:p-6 h-fit">
-                <h2 className="text-xl font-bold text-white mb-4 lg:mb-6">
-                  My Tasks
-                </h2>
-                <div
-                  className="lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto relative"
-                  id="tasksContainer"
-                >
-                  {taskStatus === "loading" ? (
-                    <div className="text-white">Loading...</div>
-                  ) : taskStatus === "failed" ? (
-                    <div className="text-red-500">Error: {error}</div>
-                  ) : tasks.length === 0 ? (
-                    <div className="text-zinc-300">No tasks available</div>
-                  ) : (
-                    <div className="space-y-4">
-                      {tasks.map((task) => (
-                        <TaskItem key={task.id} task={task} />
-                      ))}
-                    </div>
-                  )}
-
+              <div className="border-[3px] border-white p-6 h-fit">
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-xl font-bold text-white">My Tasks</h2>
                   <div
-                    id="scrollIndicator"
-                    className="absolute bottom-2 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 hidden lg:block"
-                    style={{ opacity: tasks.length > 3 ? "1" : "0" }}
+                    className="lg:max-h-[calc(100vh-16rem)] lg:overflow-y-auto relative"
+                    id="tasksContainer"
                   >
-                    <div className="animate-bounce">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 text-white opacity-50"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                        />
-                      </svg>
+                    {error ? (
+                      <div className="text-red-500">{error}</div>
+                    ) : tasks.length > 0 ? (
+                      tasks.map((task) => (
+                        <TaskItem key={task.id} task={task} />
+                      ))
+                    ) : (
+                      <div className="text-zinc-300">No tasks available</div>
+                    )}
+                    <div
+                      id="scrollIndicator"
+                      className="absolute bottom-2 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 hidden lg:block"
+                      style={{ opacity: 0 }}
+                    >
+                      <div className="animate-bounce">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6 text-white opacity-50"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
