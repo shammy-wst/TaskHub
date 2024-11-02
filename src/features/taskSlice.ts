@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+export const API_URL = process.env.REACT_APP_API_URL;
+
+console.log("API URL:", API_URL); // Pour débugger
+console.log("API URL utilisée:", process.env.REACT_APP_API_URL);
 
 export type TaskStatus = "en_attente" | "en_cours" | "terminé";
 
@@ -56,6 +59,8 @@ export const fetchTasks = createAsyncThunk(
       const response = await fetch(`${API_URL}/api/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
         },
       });
 
