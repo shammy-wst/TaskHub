@@ -51,6 +51,8 @@ const TaskItem: React.FC<TaskProps> = React.memo(({ task }) => {
 
   return (
     <div
+      role="article"
+      aria-label={task.title}
       className={`relative flex flex-col border-[3px] rounded-lg p-4 md:p-6 group mb-4 
                      ${getStatusColor(task.status)} ${getStatusBg(
         task.status
@@ -69,18 +71,13 @@ const TaskItem: React.FC<TaskProps> = React.memo(({ task }) => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mt-4">
             <span className="text-zinc-300">Status:</span>
             <select
-              value={task.status}
-              onChange={handleStatusChange}
+              aria-label="Status"
               className={`text-white border-[3px] rounded-lg p-2 appearance-none pr-8 relative
                          ${getStatusColor(task.status)} ${getStatusBg(
                 task.status
               )}`}
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
-                backgroundPosition: "right 0.5rem center",
-                backgroundRepeat: "no-repeat",
-                backgroundSize: "1.5em",
-              }}
+              value={task.status}
+              onChange={handleStatusChange}
             >
               <option value="pending">Pending</option>
               <option value="in_progress">In Progress</option>

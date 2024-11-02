@@ -36,9 +36,11 @@ const Home: React.FC = () => {
     if (taskStatus === "idle") {
       dispatch(fetchTasks())
         .unwrap()
-        .catch((error) => {
-          if (error.message.includes("Non authentifié")) {
-            navigate("/login");
+        .catch((error: any) => {
+          if (error && typeof error === "object" && "message" in error) {
+            if (error.message.includes("Non authentifié")) {
+              navigate("/login");
+            }
           }
         });
     }

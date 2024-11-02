@@ -1,11 +1,11 @@
-import clickSound from "../assets/sounds/click.mp3";
+import { useCallback } from "react";
 
 export const useSound = () => {
-  const playClickSound = () => {
-    const audio = new Audio(clickSound);
+  const playClickSound = useCallback(() => {
+    const audio = new Audio();
     audio.volume = 0.5;
     audio.play().catch(() => {});
-  };
+  }, []);
 
   return { playClickSound };
 };

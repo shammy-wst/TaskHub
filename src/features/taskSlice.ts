@@ -191,6 +191,9 @@ const taskSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
+    setTasks: (state, action) => {
+      state.items = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -220,5 +223,5 @@ const taskSlice = createSlice({
   },
 });
 
-export const { resetTasks } = taskSlice.actions;
+export const { resetTasks, setTasks } = taskSlice.actions;
 export default taskSlice.reducer;
