@@ -24,6 +24,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Using API URL:", API_URL);
     playClickSound();
     setError("");
 
@@ -50,10 +51,12 @@ const Login: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({ username, password }),
       });
+
+      console.log("Sending request to:", `${API_URL}/api/auth/${endpoint}`);
+      console.log("With data:", { username, password });
 
       console.log("Response status:", response.status);
       const text = await response.text();
