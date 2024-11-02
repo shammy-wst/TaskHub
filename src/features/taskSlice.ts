@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-export const API_URL = process.env.REACT_APP_API_URL;
+export const API_URL =
+  process.env.REACT_APP_API_URL || "https://taskhub-backend-di2m.onrender.com";
 
 console.log("API URL:", API_URL); // Pour débugger
 console.log("API URL utilisée:", process.env.REACT_APP_API_URL);

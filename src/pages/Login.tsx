@@ -25,6 +25,11 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Using API URL:", API_URL);
+    if (!API_URL) {
+      console.error("API_URL is not defined!");
+      setError("Configuration error: API URL not defined");
+      return;
+    }
     playClickSound();
     setError("");
 
@@ -46,7 +51,9 @@ const Login: React.FC = () => {
 
     try {
       const endpoint = isLogin ? "login" : "register";
-      const response = await fetch(`${API_URL}/api/auth/${endpoint}`, {
+      const fullUrl = `${API_URL}/api/auth/${endpoint}`;
+
+      const response = await fetch(fullUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +62,7 @@ const Login: React.FC = () => {
         body: JSON.stringify({ username, password }),
       });
 
-      console.log("Sending request to:", `${API_URL}/api/auth/${endpoint}`);
+      console.log("Sending request to:", fullUrl);
       console.log("With data:", { username, password });
 
       console.log("Response status:", response.status);
