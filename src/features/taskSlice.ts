@@ -56,11 +56,16 @@ export const fetchTasks = createAsyncThunk(
         return rejectWithValue("Non authentifié");
       }
 
+      const defaultHeaders = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Access-Control-Allow-Origin": "*",
+      };
+
       const response = await fetch(`${API_URL}/api/tasks`, {
         headers: {
+          ...defaultHeaders,
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
         },
       });
 
@@ -90,11 +95,17 @@ export const createTask = createAsyncThunk(
         throw new Error("Non authentifié");
       }
 
+      const defaultHeaders = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Access-Control-Allow-Origin": "*",
+      };
+
       const response = await fetch(`${API_URL}/api/tasks`, {
         method: "POST",
         headers: {
+          ...defaultHeaders,
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
         body: JSON.stringify(task),
       });
@@ -120,11 +131,17 @@ export const updateTaskStatus = createAsyncThunk(
         throw new Error("Non authentifié");
       }
 
+      const defaultHeaders = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Access-Control-Allow-Origin": "*",
+      };
+
       const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "PATCH",
         headers: {
+          ...defaultHeaders,
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
         body: JSON.stringify({ status }),
       });
@@ -149,11 +166,17 @@ export const deleteTask = createAsyncThunk(
         throw new Error("Non authentifié");
       }
 
+      const defaultHeaders = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Access-Control-Allow-Origin": "*",
+      };
+
       const response = await fetch(`${API_URL}/api/tasks/${id}`, {
         method: "DELETE",
         headers: {
+          ...defaultHeaders,
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 

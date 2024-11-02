@@ -49,11 +49,17 @@ const Login: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
+          "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await response.json();
+      console.log("Response status:", response.status);
+      const text = await response.text();
+      console.log("Raw response:", text);
+
+      const data = text ? JSON.parse(text) : {};
 
       if (!response.ok) {
         throw new Error(data.message || "Erreur d'authentification");
