@@ -1,17 +1,21 @@
 import React from "react";
 import { SignOut } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import taskHubGif from "../assets/cube.gif";
 import { useSound } from "../hooks/useSound";
+import { resetTasks } from "../features/taskSlice";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { playClickSound } = useSound();
   const token = localStorage.getItem("authToken");
 
   const handleLogout = () => {
     playClickSound();
     localStorage.removeItem("authToken");
+    dispatch(resetTasks());
     navigate("/login");
   };
 

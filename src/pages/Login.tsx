@@ -29,17 +29,17 @@ const Login: React.FC = () => {
 
     // Validation basique
     if (username.length < 3) {
-      setError("Le nom d'utilisateur doit contenir au moins 3 caractères");
+      setError("Username must be at least 3 characters long");
       return;
     }
 
     if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+      setError("Password must be at least 6 characters long");
       return;
     }
 
     if (!isLogin && password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
+      setError("Passwords do not match");
       return;
     }
 
@@ -68,8 +68,8 @@ const Login: React.FC = () => {
 
         // Afficher un message de succès (optionnel)
         const message = isLogin
-          ? "Connexion réussie"
-          : "Compte créé avec succès";
+          ? "Login successful"
+          : "Account created successfully";
         console.log(message);
 
         // Redirection

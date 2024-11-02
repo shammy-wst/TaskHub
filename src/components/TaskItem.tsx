@@ -82,9 +82,9 @@ const TaskItem: React.FC<TaskProps> = React.memo(({ task }) => {
                 backgroundSize: "1.5em",
               }}
             >
-              <option value="en_attente">Pending</option>
-              <option value="en_cours">In Progress</option>
-              <option value="terminé">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
             </select>
           </div>
         </div>

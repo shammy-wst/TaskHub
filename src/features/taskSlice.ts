@@ -185,7 +185,13 @@ const initialState: TaskState = {
 const taskSlice = createSlice({
   name: "tasks",
   initialState,
-  reducers: {},
+  reducers: {
+    resetTasks: (state) => {
+      state.items = [];
+      state.status = "idle";
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTasks.pending, (state) => {
@@ -214,4 +220,5 @@ const taskSlice = createSlice({
   },
 });
 
+export const { resetTasks } = taskSlice.actions;
 export default taskSlice.reducer;
