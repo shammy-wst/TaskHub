@@ -1,21 +1,22 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Header from "./components/Header";
-import About from "./pages/About";
-import "@fontsource/jetbrains-mono";
+import LoadingSpinner from "./components/LoadingSpinner";
+
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const About = lazy(() => import("./pages/About"));
 
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="h-screen w-full flex flex-col bg-black">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
+      <div className="min-h-screen flex flex-col bg-black">
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/about" element={<About />} />
+          </Routes>
+        </Suspense>
       </div>
     </Router>
   );

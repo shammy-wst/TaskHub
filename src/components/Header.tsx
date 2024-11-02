@@ -2,19 +2,32 @@ import React from "react";
 import { SignOut } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import taskHubGif from "../assets/cube.gif";
+import { useSound } from "../hooks/useSound";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const { playClickSound } = useSound();
   const token = localStorage.getItem("authToken");
 
   const handleLogout = () => {
+    playClickSound();
     localStorage.removeItem("authToken");
     navigate("/login");
   };
 
+  const handleLogoClick = () => {
+    playClickSound();
+    navigate("/");
+  };
+
   return (
     <header className="bg-black h-14 flex items-center z-50 w-full">
-      <img src={taskHubGif} alt="TaskHub" className="h-8 ml-4" />
+      <button
+        onClick={handleLogoClick}
+        className="ml-4 hover:opacity-80 transition-opacity"
+      >
+        <img src={`${taskHubGif}?v=1`} alt="TaskHub" className="h-8" />
+      </button>
       <div className="flex-1" />
       {token && (
         <button

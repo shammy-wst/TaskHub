@@ -1,57 +1,84 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-export const TASK_STATUSES = ["en_cours", "terminé", "en_attente"] as const;
-export type TaskStatus = (typeof TASK_STATUSES)[number];
+export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
-interface Task {
+export type TaskStatus = "en_attente" | "en_cours" | "terminé";
+
+export interface Task {
   id: number;
   title: string;
   description: string;
   status: TaskStatus;
-  statusId?: number;
 }
 
-interface CreateTaskPayload {
+interface TaskResponse {
+  id: number;
   title: string;
   description: string;
-  status: TaskStatus;
+  statusId: number;
 }
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+interface SerializedError {
+  name?: string;
+  message?: string;
+  code?: string | number;
+  stack?: string;
+}
 
-export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
-  try {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      throw new Error("Non authentifié");
+export interface TaskError {
+  message: string;
+  code?: number;
+}
+
+function serializeError(error: SerializedError): TaskError {
+  return {
+    message: error.message || "Une erreur est survenue",
+    code:
+      typeof error.code === "string" ? parseInt(error.code, 10) : error.code,
+  };
+}
+
+export interface TaskState {
+  items: Task[];
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: TaskError | null;
+}
+
+export const fetchTasks = createAsyncThunk(
+  "tasks/fetchTasks",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return rejectWithValue("Non authentifié");
+      }
+
+      const response = await fetch(`${API_URL}/api/tasks`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return rejectWithValue(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.map((task: TaskResponse) => ({
+        ...task,
+        status: getStatusFromId(task.statusId) || "en_attente",
+      }));
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Erreur inconnue"
+      );
     }
-
-    const response = await fetch(`${API_URL}/api/tasks`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    const data = await response.json();
-    // Convertir statusId en status
-    return data.map((task: any) => ({
-      ...task,
-      status: getStatusFromId(task.statusId) || "en_attente",
-    }));
-  } catch (error) {
-    console.error("Erreur dans fetchTasks:", error);
-    throw error;
   }
-});
+);
 
 export const createTask = createAsyncThunk(
   "tasks/createTask",
-  async (task: CreateTaskPayload) => {
+  async (task: Omit<Task, "id">) => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -72,12 +99,8 @@ export const createTask = createAsyncThunk(
       }
 
       const data = await response.json();
-      return {
-        ...data,
-        status: getStatusFromId(data.statusId) || "en_attente",
-      };
+      return data;
     } catch (error) {
-      console.error("Erreur dans createTask:", error);
       throw error;
     }
   }
@@ -98,22 +121,15 @@ export const updateTaskStatus = createAsyncThunk(
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          status,
-        }),
+        body: JSON.stringify({ status }),
       });
 
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
-      const data = await response.json();
-      return {
-        ...data,
-        status: status, // Utiliser le status envoyé plutôt que celui de la réponse
-      };
+      return { id, status };
     } catch (error) {
-      console.error("Erreur dans updateTaskStatus:", error);
       throw error;
     }
   }
@@ -142,13 +158,11 @@ export const deleteTask = createAsyncThunk(
 
       return id;
     } catch (error) {
-      console.error("Erreur dans deleteTask:", error);
       throw error;
     }
   }
 );
 
-// Fonction utilitaire pour convertir statusId en status
 function getStatusFromId(statusId: number | null): TaskStatus | null {
   switch (statusId) {
     case 1:
@@ -162,13 +176,15 @@ function getStatusFromId(statusId: number | null): TaskStatus | null {
   }
 }
 
+const initialState: TaskState = {
+  items: [],
+  status: "idle",
+  error: null,
+};
+
 const taskSlice = createSlice({
   name: "tasks",
-  initialState: {
-    items: [] as Task[],
-    status: "idle",
-    error: null as string | null,
-  },
+  initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -181,48 +197,19 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.error.message || "Une erreur est survenue";
-      })
-      .addCase(createTask.pending, (state) => {
-        state.status = "loading";
+        state.error = serializeError(action.error);
       })
       .addCase(createTask.fulfilled, (state, action) => {
-        state.status = "succeeded";
         state.items.push(action.payload);
       })
-      .addCase(createTask.rejected, (state, action) => {
-        state.status = "failed";
-        state.error =
-          action.error.message || "Erreur lors de la création de la tâche";
-      })
-      .addCase(updateTaskStatus.pending, (state) => {
-        state.status = "loading";
-      })
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const index = state.items.findIndex(
-          (task) => task.id === action.payload.id
-        );
-        if (index !== -1) {
-          state.items[index] = action.payload;
+        const task = state.items.find((t) => t.id === action.payload.id);
+        if (task) {
+          task.status = action.payload.status;
         }
       })
-      .addCase(updateTaskStatus.rejected, (state, action) => {
-        state.status = "failed";
-        state.error =
-          action.error.message || "Erreur lors de la mise à jour du statut";
-      })
-      .addCase(deleteTask.pending, (state) => {
-        state.status = "loading";
-      })
       .addCase(deleteTask.fulfilled, (state, action) => {
-        state.status = "succeeded";
         state.items = state.items.filter((task) => task.id !== action.payload);
-      })
-      .addCase(deleteTask.rejected, (state, action) => {
-        state.status = "failed";
-        state.error =
-          action.error.message || "Erreur lors de la suppression de la tâche";
       });
   },
 });

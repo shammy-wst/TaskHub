@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTasks, createTask } from "../features/taskSlice";
 import TaskItem from "../components/TaskItem";
 import { RootState, AppDispatch } from "../app/store";
 import { useNavigate } from "react-router-dom";
 import WelcomeScreen from "../components/WelcomeScreen";
-import RainbowText from "../components/RainbowText";
-import cubeGif from "../assets/cube.gif";
-import galaxyGif from "../assets/galaxy.gif";
 import fujiGif from "../assets/fuji.gif";
+import galaxyGif from "../assets/galaxy.gif";
+import { useSound } from "../hooks/useSound";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import cubeGif from "../assets/cube.gif";
 
 const Home: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,29 +25,25 @@ const Home: React.FC = () => {
     const lastVisit = localStorage.getItem("lastVisitTimestamp");
     const currentTime = new Date().getTime();
 
-    // Si jamais visité ou si la dernière visite date de plus de 24h
     if (!lastVisit || currentTime - parseInt(lastVisit) > 24 * 60 * 60 * 1000) {
       return true;
     }
     return false;
   });
+  const { playClickSound } = useSound();
 
-  React.useEffect(() => {
-    console.log("Home: useEffect déclenché");
+  useEffect(() => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
-      console.log("Pas de token, redirection vers login");
       navigate("/login");
       return;
     }
 
     if (taskStatus === "idle") {
-      console.log("Déclenchement de fetchTasks");
       dispatch(fetchTasks())
         .unwrap()
         .catch((error) => {
-          console.error("Erreur lors du chargement des tâches:", error);
           if (error.message.includes("Non authentifié")) {
             navigate("/login");
           }
@@ -53,65 +51,68 @@ const Home: React.FC = () => {
     }
   }, [taskStatus, dispatch, navigate]);
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("handleAddTask déclenché");
-    setFormError(null);
+  const handleAddTask = useCallback(
+    async (e: React.FormEvent) => {
+      playClickSound();
+      e.preventDefault();
+      setFormError(null);
 
-    if (!title.trim() || !description.trim()) {
-      setFormError("Title and description are required");
-      return;
-    }
+      if (!title.trim() || !description.trim()) {
+        setFormError("Title and description are required");
+        return;
+      }
 
-    try {
-      console.log("Création de la tâche:", { title, description });
-      await dispatch(
-        createTask({
-          title: title.trim(),
-          description: description.trim(),
-          status: "en_attente",
-        })
-      ).unwrap();
+      try {
+        await dispatch(
+          createTask({
+            title: title.trim(),
+            description: description.trim(),
+            status: "en_attente",
+          })
+        ).unwrap();
 
-      console.log("Tâche créée avec succès");
-      setTitle("");
-      setDescription("");
-
-      dispatch(fetchTasks());
-    } catch (error) {
-      console.error("Erreur lors de la création de la tâche:", error);
-      setFormError(
-        error instanceof Error ? error.message : "Error while creating the task"
-      );
-    }
-  };
+        setTitle("");
+        setDescription("");
+        dispatch(fetchTasks());
+      } catch (error) {
+        setFormError(
+          error instanceof Error
+            ? error.message
+            : "Une erreur inattendue s'est produite"
+        );
+      }
+    },
+    [dispatch, title, description, playClickSound]
+  );
 
   return (
-    <>
-      {showWelcome && (
-        <WelcomeScreen onComplete={() => setShowWelcome(false)} />
-      )}
+    <div className="min-h-screen flex flex-col bg-black">
+      <Header />
 
-      <main
-        className="flex-1 lg:overflow-hidden relative"
-        style={{ background: "black" }}
-      >
+      {/* Background avec cube */}
+      <div className="fixed inset-0 z-0 opacity-20">
         <div
-          className="absolute inset-0 z-0 opacity-20"
+          className="absolute inset-0"
           style={{
             backgroundImage: `url(${cubeGif})`,
-            backgroundSize: "30%",
+            backgroundSize: "25%",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         />
+      </div>
 
-        <div className="relative z-10 h-full max-w-5xl mx-auto flex items-center">
-          <div className="flex flex-col lg:flex-row w-full gap-8">
-            {/* Left column */}
-            <div className="flex flex-col lg:w-1/3 gap-8">
+      <main className="flex-1 flex items-center justify-center w-full p-6 relative z-10">
+        <div className="w-full max-w-7xl">
+          {showWelcome && (
+            <WelcomeScreen onComplete={() => setShowWelcome(false)} />
+          )}
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Colonne gauche (1/3) - Form et About */}
+            <div className="lg:w-1/3 flex-shrink-0 flex flex-col gap-6">
               {/* Task Form */}
-              <div className="border-[3px] border-white p-6 flex flex-col gap-4">
+              <div className="border-[3px] border-white rounded-lg p-6 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <span className="animate-pulse text-green-500 text-xl">
                     ›
@@ -129,20 +130,20 @@ const Home: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Task title"
-                    className="w-full border-[3px] border-white p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white"
+                    className="w-full border-[3px] border-white rounded-lg p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white"
                   />
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Description"
-                    className="w-full border-[3px] border-white p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white min-h-[120px] resize-none"
+                    className="w-full border-[3px] border-white rounded-lg p-3 focus:outline-none focus:border-blue-500 transition-colors placeholder-zinc-500 bg-black text-white min-h-[120px] resize-none"
                   />
                   {formError && (
                     <div className="text-red-500 text-sm">{formError}</div>
                   )}
                   <button
                     type="submit"
-                    className="relative w-full border-[3px] border-white p-3 text-white group"
+                    className="relative w-full border-[3px] border-white rounded-lg p-3 text-white group"
                   >
                     <span className="relative z-10 group-hover:opacity-0 transition-opacity duration-200">
                       Add Task
@@ -159,15 +160,18 @@ const Home: React.FC = () => {
               </div>
 
               {/* About section */}
-              <div className="border-[3px] border-white p-6 lg:block">
+              <div className="border-[3px] border-white rounded-lg p-6">
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-white font-mono">
                       About TaskHub
                     </h3>
                     <button
-                      onClick={() => navigate("/about")}
-                      className="relative border-[3px] border-white px-4 py-2 text-white transition-all duration-200 font-mono text-sm flex items-center gap-2 group"
+                      onClick={() => {
+                        playClickSound();
+                        navigate("/about");
+                      }}
+                      className="relative border-[3px] border-white rounded-lg px-4 py-2 text-white transition-all duration-200 font-mono text-sm flex items-center gap-2 group"
                     >
                       <span className="relative z-10 group-hover:opacity-0 transition-opacity duration-200">
                         Discover our story
@@ -185,9 +189,9 @@ const Home: React.FC = () => {
               </div>
             </div>
 
-            {/* Right column */}
-            <div className="lg:w-2/3">
-              <div className="border-[3px] border-white p-6 h-fit">
+            {/* Colonne droite (2/3) - Tasks */}
+            <div className="flex-1">
+              <div className="border-[3px] border-white rounded-lg p-6 h-fit">
                 <div className="flex flex-col gap-4">
                   <h2 className="text-xl font-bold text-white">My Tasks</h2>
                   <div
@@ -195,7 +199,7 @@ const Home: React.FC = () => {
                     id="tasksContainer"
                   >
                     {error ? (
-                      <div className="text-red-500">{error}</div>
+                      <div className="text-red-500">{error.message}</div>
                     ) : tasks.length > 0 ? (
                       tasks.map((task) => (
                         <TaskItem key={task.id} task={task} />
@@ -233,14 +237,8 @@ const Home: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <div className="text-center py-2">
-        <div className="text-white">Icham M'MADI</div>
-        <RainbowText>
-          <span className="text-sm">Creative Web Developer</span>
-        </RainbowText>
-      </div>
-    </>
+      <Footer />
+    </div>
   );
 };
 

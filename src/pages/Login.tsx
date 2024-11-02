@@ -1,72 +1,186 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { useSound } from "../hooks/useSound";
+import cubeGif from "../assets/cube.gif";
+import { API_URL } from "../features/taskSlice";
 
 const Login: React.FC = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { playClickSound } = useSound();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    playClickSound();
+    setError("");
+
+    if (!isLogin && password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const endpoint = isLogin ? "login" : "register";
+      const response = await fetch(`${API_URL}/api/auth/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }), // Inclure les identifiants dans la requête
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
-      console.log("Réponse de l'API:", data); // Ajoutez ce log pour vérifier la réponse
 
       if (data.token) {
         localStorage.setItem("authToken", data.token);
         navigate("/");
       } else {
-        setError("Erreur lors de la connexion");
+        setError(data.message || "Authentication failed");
       }
     } catch (error) {
-      console.error("Erreur lors de la connexion au serveur:", error); // Ajoutez ce log pour vérifier les erreurs
-      setError("Erreur lors de la connexion au serveur");
+      setError("Server connection error");
     }
   };
 
-  return (
-    <div className="container mx-auto p-6 flex flex-col items-center">
-      <h2 className="text-3xl font-bold mb-6">Connexion</h2>
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm"
-      >
-        <input
-          type="text"
-          placeholder="Nom d'utilisateur"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-        >
-          Se connecter
-        </button>
-      </form>
+  const toggleMode = () => {
+    playClickSound();
+    setIsLogin(!isLogin);
+    setError("");
+  };
 
-      {error && <p className="text-red-500 mt-4">{error}</p>}
+  return (
+    <div className="min-h-screen flex flex-col bg-black text-white">
+      <Header />
+
+      {/* Background avec cube */}
+      <div className="fixed inset-0 z-0 opacity-20">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${cubeGif})`,
+            backgroundSize: "25%",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+      </div>
+
+      {/* Contenu principal */}
+      <main className="flex-1 flex items-center justify-center p-8 relative z-10">
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <h2 className="text-3xl font-bold">
+              {isLogin ? "Access Portal" : "Initialize Account"}
+            </h2>
+            <div className="flex items-center gap-4 mt-4">
+              <button
+                onClick={() => isLogin || toggleMode()}
+                className={`px-4 py-2 rounded-lg transition-all duration-200
+                  ${
+                    isLogin
+                      ? "bg-white/10 text-white border-[3px] border-white"
+                      : "text-white/50 hover:text-white"
+                  }`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => !isLogin || toggleMode()}
+                className={`px-4 py-2 rounded-lg transition-all duration-200
+                  ${
+                    !isLogin
+                      ? "bg-white/10 text-white border-[3px] border-white"
+                      : "text-white/50 hover:text-white"
+                  }`}
+              >
+                Register
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="bg-black/50 border-[3px] border-white/50 rounded-lg p-4 
+                         text-white placeholder-white/50 focus:border-white
+                         transition-colors duration-200"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-black/50 border-[3px] border-white/50 rounded-lg p-4 
+                         text-white placeholder-white/50 focus:border-white
+                         transition-colors duration-200"
+                required
+              />
+            </div>
+
+            {!isLogin && (
+              <div className="flex flex-col gap-2">
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-black/50 border-[3px] border-white/50 rounded-lg p-4 
+                           text-white placeholder-white/50 focus:border-white
+                           transition-colors duration-200"
+                  required
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="relative border-[3px] border-white rounded-lg px-6 py-4 
+                       hover:bg-white hover:text-black transition-all duration-200
+                       flex items-center justify-center gap-2 group mt-4 overflow-hidden"
+            >
+              <span className="relative z-10">
+                {isLogin ? "Initialize Session" : "Create Account"}
+              </span>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div
+                  className="absolute inset-0 bg-white"
+                  style={{
+                    backgroundImage: `url(${cubeGif})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    opacity: 0.1,
+                  }}
+                />
+              </div>
+            </button>
+          </form>
+
+          {error && (
+            <div
+              className="mt-6 text-red-500 text-center bg-red-500/10 
+                          border-2 border-red-500 rounded-lg p-4"
+            >
+              {error}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };
