@@ -15,13 +15,31 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { playClickSound } = useSound();
 
+  const clearForm = () => {
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
+    setError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     playClickSound();
     setError("");
 
+    // Validation basique
+    if (username.length < 3) {
+      setError("Le nom d'utilisateur doit contenir au moins 3 caractères");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
     if (!isLogin && password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
 
@@ -37,21 +55,41 @@ const Login: React.FC = () => {
 
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur d'authentification");
+      }
+
       if (data.token) {
+        // Stocker le token
         localStorage.setItem("authToken", data.token);
+
+        // Stocker le nom d'utilisateur
+        localStorage.setItem("username", username);
+
+        // Afficher un message de succès (optionnel)
+        const message = isLogin
+          ? "Connexion réussie"
+          : "Compte créé avec succès";
+        console.log(message);
+
+        // Redirection
         navigate("/");
       } else {
-        setError(data.message || "Authentication failed");
+        setError(data.message || "Erreur d'authentification");
       }
     } catch (error) {
-      setError("Server connection error");
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Erreur de connexion au serveur");
+      }
     }
   };
 
   const toggleMode = () => {
     playClickSound();
     setIsLogin(!isLogin);
-    setError("");
+    clearForm();
   };
 
   return (
@@ -115,6 +153,7 @@ const Login: React.FC = () => {
                          text-white placeholder-white/50 focus:border-white
                          transition-colors duration-200"
                 required
+                minLength={3}
               />
             </div>
 
@@ -128,6 +167,7 @@ const Login: React.FC = () => {
                          text-white placeholder-white/50 focus:border-white
                          transition-colors duration-200"
                 required
+                minLength={6}
               />
             </div>
 
@@ -142,6 +182,7 @@ const Login: React.FC = () => {
                            text-white placeholder-white/50 focus:border-white
                            transition-colors duration-200"
                   required
+                  minLength={6}
                 />
               </div>
             )}
