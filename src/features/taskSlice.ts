@@ -3,9 +3,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 export const API_URL =
   process.env.REACT_APP_API_URL || "https://taskhub-backend-di2m.onrender.com";
 
-console.log("API URL:", API_URL); // Pour débugger
-console.log("API URL utilisée:", process.env.REACT_APP_API_URL);
-
 export type TaskStatus = "en_attente" | "en_cours" | "terminé";
 
 export interface Task {
@@ -19,27 +16,7 @@ interface TaskResponse {
   id: number;
   title: string;
   description: string;
-  statusId: number;
-}
-
-interface SerializedError {
-  name?: string;
-  message?: string;
-  code?: string | number;
-  stack?: string;
-}
-
-export interface TaskError {
-  message: string;
-  code?: number;
-}
-
-function serializeError(error: SerializedError): TaskError {
-  return {
-    message: error.message || "Une erreur est survenue",
-    code:
-      typeof error.code === "string" ? parseInt(error.code, 10) : error.code,
-  };
+  status: TaskStatus;
 }
 
 export interface TaskState {
@@ -47,6 +24,17 @@ export interface TaskState {
   status: "idle" | "loading" | "succeeded" | "failed";
   error: TaskError | null;
 }
+
+export interface TaskError {
+  message: string;
+  code?: number;
+}
+
+const initialState: TaskState = {
+  items: [],
+  status: "idle",
+  error: null,
+};
 
 export const fetchTasks = createAsyncThunk(
   "tasks/fetchTasks",
@@ -57,15 +45,9 @@ export const fetchTasks = createAsyncThunk(
         return rejectWithValue("Non authentifié");
       }
 
-      const defaultHeaders = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "Access-Control-Allow-Origin": "*",
-      };
-
       const response = await fetch(`${API_URL}/api/tasks`, {
         headers: {
-          ...defaultHeaders,
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -75,10 +57,77 @@ export const fetchTasks = createAsyncThunk(
       }
 
       const data = await response.json();
+
       return data.map((task: TaskResponse) => ({
-        ...task,
-        status: getStatusFromId(task.statusId) || "en_attente",
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
       }));
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Erreur inconnue"
+      );
+    }
+  }
+);
+
+export const updateTaskStatus = createAsyncThunk(
+  "tasks/updateTaskStatus",
+  async (
+    { id, status }: { id: number; status: TaskStatus },
+    { rejectWithValue }
+  ) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return rejectWithValue("Non authentifié");
+      }
+
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        return rejectWithValue(`Erreur HTTP: ${response.status}`);
+      }
+
+      return { id, status };
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Erreur inconnue"
+      );
+    }
+  }
+);
+
+export const deleteTask = createAsyncThunk(
+  "tasks/deleteTask",
+  async (id: number, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return rejectWithValue("Non authentifié");
+      }
+
+      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        return rejectWithValue(`Erreur HTTP: ${response.status}`);
+      }
+
+      return id;
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : "Erreur inconnue"
@@ -89,129 +138,49 @@ export const fetchTasks = createAsyncThunk(
 
 export const createTask = createAsyncThunk(
   "tasks/createTask",
-  async (task: Omit<Task, "id">) => {
+  async (
+    {
+      title,
+      description,
+      status,
+    }: {
+      title: string;
+      description: string;
+      status: TaskStatus;
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
-        throw new Error("Non authentifié");
+        return rejectWithValue("Non authentifié");
       }
-
-      const defaultHeaders = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "Access-Control-Allow-Origin": "*",
-      };
 
       const response = await fetch(`${API_URL}/api/tasks`, {
         method: "POST",
         headers: {
-          ...defaultHeaders,
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(task),
+        body: JSON.stringify({ title, description, status }),
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        return rejectWithValue(`Erreur HTTP: ${response.status}`);
       }
 
       const data = await response.json();
+
       return data;
     } catch (error) {
-      throw error;
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Erreur inconnue"
+      );
     }
   }
 );
 
-export const updateTaskStatus = createAsyncThunk(
-  "tasks/updateTaskStatus",
-  async ({ id, status }: { id: number; status: TaskStatus }) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        throw new Error("Non authentifié");
-      }
-
-      const defaultHeaders = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "Access-Control-Allow-Origin": "*",
-      };
-
-      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
-        method: "PATCH",
-        headers: {
-          ...defaultHeaders,
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      return { id, status };
-    } catch (error) {
-      throw error;
-    }
-  }
-);
-
-export const deleteTask = createAsyncThunk(
-  "tasks/deleteTask",
-  async (id: number) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        throw new Error("Non authentifié");
-      }
-
-      const defaultHeaders = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "Access-Control-Allow-Origin": "*",
-      };
-
-      const response = await fetch(`${API_URL}/api/tasks/${id}`, {
-        method: "DELETE",
-        headers: {
-          ...defaultHeaders,
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      return id;
-    } catch (error) {
-      throw error;
-    }
-  }
-);
-
-function getStatusFromId(statusId: number | null): TaskStatus | null {
-  switch (statusId) {
-    case 1:
-      return "en_attente";
-    case 2:
-      return "en_cours";
-    case 3:
-      return "terminé";
-    default:
-      return null;
-  }
-}
-
-const initialState: TaskState = {
-  items: [],
-  status: "idle",
-  error: null,
-};
-
-const taskSlice = createSlice({
+const tasksSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
@@ -219,9 +188,6 @@ const taskSlice = createSlice({
       state.items = [];
       state.status = "idle";
       state.error = null;
-    },
-    setTasks: (state, action) => {
-      state.items = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -235,10 +201,9 @@ const taskSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.status = "failed";
-        state.error = serializeError(action.error);
-      })
-      .addCase(createTask.fulfilled, (state, action) => {
-        state.items.push(action.payload);
+        state.error = {
+          message: (action.payload as string) || "Une erreur est survenue",
+        };
       })
       .addCase(updateTaskStatus.fulfilled, (state, action) => {
         const task = state.items.find((t) => t.id === action.payload.id);
@@ -248,9 +213,13 @@ const taskSlice = createSlice({
       })
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.items = state.items.filter((task) => task.id !== action.payload);
+      })
+      .addCase(createTask.fulfilled, (state, action) => {
+        state.items.push(action.payload);
       });
   },
 });
 
-export const { resetTasks, setTasks } = taskSlice.actions;
-export default taskSlice.reducer;
+export default tasksSlice.reducer;
+
+export const { resetTasks } = tasksSlice.actions;

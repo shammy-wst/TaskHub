@@ -39,14 +39,21 @@ const TaskItem: React.FC<TaskProps> = React.memo(({ task }) => {
     }
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     playClickSound();
     const newStatus = e.target.value as Task["status"];
-    dispatch(updateTaskStatus({ id: task.id, status: newStatus }))
-      .unwrap()
-      .catch((error) => {
-        console.error("Erreur silencieuse:", error);
-      });
+    console.log("Nouveau status sélectionné:", newStatus);
+
+    try {
+      await dispatch(
+        updateTaskStatus({ id: task.id, status: newStatus })
+      ).unwrap();
+      console.log("Status mis à jour avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du status:", error);
+    }
   };
 
   return (
@@ -79,9 +86,9 @@ const TaskItem: React.FC<TaskProps> = React.memo(({ task }) => {
               value={task.status}
               onChange={handleStatusChange}
             >
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="en_attente">Pending</option>
+              <option value="en_cours">In Progress</option>
+              <option value="terminé">Completed</option>
             </select>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { TaskStatus } from "../features/taskSlice";
 
-export const getStatusFromId = (statusId: number): TaskStatus | null => {
+export const getStatusFromId = (statusId: number): TaskStatus => {
   switch (statusId) {
     case 1:
       return "en_attente";
@@ -9,7 +9,7 @@ export const getStatusFromId = (statusId: number): TaskStatus | null => {
     case 3:
       return "terminé";
     default:
-      return null;
+      return "en_attente";
   }
 };
 
@@ -36,5 +36,18 @@ export const getStatusBg = (status: TaskStatus): string => {
       return "bg-green-500/10";
     default:
       return "bg-black";
+  }
+};
+
+export const getStatusId = (status: TaskStatus): number => {
+  switch (status) {
+    case "en_attente":
+      return 1;
+    case "en_cours":
+      return 2;
+    case "terminé":
+      return 3;
+    default:
+      return 1;
   }
 };
