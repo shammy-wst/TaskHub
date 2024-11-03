@@ -12,8 +12,8 @@ describe("Status Utilities", () => {
       expect(getStatusFromId(3)).toBe("terminé");
     });
 
-    it("should return null for invalid ID", () => {
-      expect(getStatusFromId(999)).toBeNull();
+    it("should return 'en_attente' for invalid ID", () => {
+      expect(getStatusFromId(999)).toBe("en_attente");
     });
   });
 

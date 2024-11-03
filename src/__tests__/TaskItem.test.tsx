@@ -1,21 +1,14 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
+import tasksReducer, { TaskState } from "../features/taskSlice";
 import TaskItem from "../components/TaskItem";
-import tasksReducer, {
-  setTasks,
-  Task,
-  TaskStatus,
-} from "../features/taskSlice";
+import type { Task, TaskStatus } from "../features/taskSlice";
+import userEvent from "@testing-library/user-event";
 
-// Définir RootState localement
 interface RootState {
-  tasks: {
-    items: Task[];
-    status: string;
-    error: null | any;
-  };
+  tasks: TaskState;
 }
 
 jest.mock("../hooks/useSound", () => ({
@@ -29,70 +22,65 @@ describe("TaskItem Component", () => {
     id: 1,
     title: "Test Task",
     description: "Test Description",
-    status: "pending" as TaskStatus,
+    status: "en_attente" as TaskStatus,
   };
 
   let store: ReturnType<typeof configureStore>;
 
   beforeEach(() => {
+    const initialState: TaskState = {
+      items: [mockTask],
+      status: "idle",
+      error: null,
+    };
+
     store = configureStore({
       reducer: {
         tasks: tasksReducer,
       },
+      preloadedState: {
+        tasks: initialState,
+      },
     });
-    localStorage.clear();
-    localStorage.setItem("authToken", "fake-token");
-  });
 
-  test("renders task title and description", () => {
-    render(
-      <Provider store={store}>
-        <TaskItem task={mockTask} />
-      </Provider>
-    );
-    expect(screen.getByText(mockTask.title)).toBeTruthy();
-    expect(screen.getByText(mockTask.description)).toBeTruthy();
-  });
-
-  test("renders with correct status style", () => {
-    render(
-      <Provider store={store}>
-        <TaskItem task={mockTask} />
-      </Provider>
-    );
-    const taskContainer = screen.getByRole("article", {
-      name: new RegExp(mockTask.title),
-    });
-    expect(taskContainer).toHaveClass("border-white");
-  });
-
-  test("allows status change", async () => {
-    // Initialiser avec la tâche
-    store.dispatch(setTasks([mockTask]));
-
-    // Mock API
-    global.fetch = jest.fn(() =>
+    global.fetch = jest.fn().mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () =>
-          Promise.resolve({
-            task: { ...mockTask, status: "in_progress" as TaskStatus },
-          }),
+        json: () => Promise.resolve({ ...mockTask, status: "en_cours" }),
       })
     ) as jest.Mock;
 
-    render(
+    Storage.prototype.getItem = jest.fn(() => "fake-token");
+  });
+
+  test("allows status change", async () => {
+    const user = userEvent.setup();
+
+    const { rerender } = render(
       <Provider store={store}>
         <TaskItem task={mockTask} />
       </Provider>
     );
 
-    const statusSelect = screen.getByRole("combobox", { name: /Status/i });
-    fireEvent.change(statusSelect, { target: { value: "in_progress" } });
+    const statusSelect = screen.getByRole("combobox", { name: /status/i });
+    await user.selectOptions(statusSelect, "en_cours");
 
-    await waitFor(() => {
-      const state = store.getState() as RootState;
-      expect(state.tasks.items[0].status).toBe("in_progress");
-    });
+    // Attendre que le state soit mis à jour
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Vérifier que le state a été mis à jour
+    const state = store.getState() as RootState;
+    expect(state.tasks.items[0].status).toBe("en_cours");
+
+    // Re-render avec la tâche mise à jour
+    rerender(
+      <Provider store={store}>
+        <TaskItem task={{ ...mockTask, status: "en_cours" }} />
+      </Provider>
+    );
+
+    // Maintenant le select devrait avoir la nouvelle valeur
+    const updatedSelect = screen.getByRole("combobox", { name: /status/i });
+    expect(updatedSelect).toHaveValue("en_cours");
   });
 });

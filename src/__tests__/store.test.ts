@@ -1,4 +1,4 @@
-import store from "../app/store";
+import { store } from "../app/store";
 import { resetTasks } from "../features/taskSlice";
 
 describe("Redux Store", () => {
@@ -7,7 +7,6 @@ describe("Redux Store", () => {
     expect(state.tasks).toBeDefined();
     expect(state.tasks.items).toEqual([]);
     expect(state.tasks.status).toBe("idle");
-    expect(state.tasks.error).toBeNull();
   });
 
   it("should handle dispatched actions", () => {

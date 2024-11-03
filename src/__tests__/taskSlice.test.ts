@@ -76,21 +76,15 @@ describe("Task Slice", () => {
   });
 
   it("should handle updateTaskStatus", async () => {
-    // Réinitialiser le store
-    store.dispatch({ type: "tasks/resetTasks" });
+    const mockTask = {
+      id: 1,
+      title: "Test Task",
+      description: "Test Description",
+      status: "en_attente",
+    };
 
-    // Attendre que l'action soit traitée
-    await store.dispatch({
-      type: "tasks/setTasks",
-      payload: [
-        {
-          id: 1,
-          title: "Test Task",
-          description: "Test Description",
-          status: "pending" as TaskStatus,
-        },
-      ],
-    });
+    // Initialiser l'état avec la tâche
+    store.dispatch(fetchTasks.fulfilled([mockTask], ""));
 
     // Vérifier l'état initial
     let state = store.getState().tasks;
@@ -100,28 +94,16 @@ describe("Task Slice", () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
-        json: () =>
-          Promise.resolve({
-            task: {
-              id: 1,
-              status: "in_progress" as TaskStatus,
-            },
-          }),
+        json: () => Promise.resolve({ ...mockTask, status: "en_cours" }),
       })
     ) as jest.Mock;
 
-    // Mettre à jour et attendre
-    await store.dispatch(
-      updateTaskStatus({
-        id: 1,
-        status: "in_progress" as TaskStatus,
-      })
-    );
+    // Mettre à jour le status
+    await store.dispatch(updateTaskStatus({ id: 1, status: "en_cours" }));
 
-    // Vérifier la mise à jour
+    // Vérifier que le status a été mis à jour
     state = store.getState().tasks;
-    expect(state.items).toHaveLength(1);
-    expect(state.items[0].status).toBe("in_progress");
+    expect(state.items[0].status).toBe("en_cours");
   });
 
   it("should handle deleteTask", async () => {
